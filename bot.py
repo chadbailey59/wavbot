@@ -44,6 +44,7 @@ if LOCAL_RUN:
             "Could not import local_runner module. Local development mode may not work."
         )
 DAILY_API_KEY = os.getenv("DAILY_API_KEY")
+DAILY_ROOM_URL = os.getenv("DAILY_ROOM_URL")
 print(f"Daily API KEY: {DAILY_API_KEY}")
 # Load environment variables
 
@@ -146,11 +147,17 @@ async def bot(args: SessionArguments):
 # Local development
 async def local_daily():
     """This is an entrypoint for running your bot locally but using Daily
-    for the transport. To use this, you'll need to have DAILY_API_KEY set in your .env file.
+    for the transport. To use this, you'll need to have DAILY_API_KEY or DAILY_ROOM_URL
+    set in your .env file.
     """
     try:
         async with aiohttp.ClientSession() as session:
-            (room_url, token) = await configure(session)
+            if DAILY_ROOM_URL:
+                room_url = DAILY_ROOM_URL
+                token = None
+            else:
+                (room_url, token) = await configure(session)
+
             logger.warning(f"Talk to your voice agent here: {room_url}")
             webbrowser.open(room_url)
             transport = DailyTransport(
@@ -178,7 +185,7 @@ async def run_bot(webrtc_connection):
 
 # Local development entry point
 if LOCAL_RUN and __name__ == "__main__":
-    if DAILY_API_KEY:
+    if DAILY_API_KEY or DAILY_ROOM_URL:
         try:
             asyncio.run(local_daily())
         except Exception as e:
