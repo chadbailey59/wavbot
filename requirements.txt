@@ -1,0 +1,4 @@
+pipecatcloud
+pipecat-ai[daily,webrtc]>=0.0.58
+python-dotenv~=1.0.1
+pipecat-ai-small-webrtc-prebuilt
