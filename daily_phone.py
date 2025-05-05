@@ -18,6 +18,7 @@ class DialInHandler:
         """
         self.transport = transport
         self.context_aggregator = context_aggregator
+        logger.info("Initializing DialInHandler")
         self._register_handlers()
 
     def _register_handlers(self):

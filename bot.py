@@ -33,7 +33,7 @@ from daily_phone import DialInHandler, DialOutHandler
 
 load_dotenv(override=True)
 
-
+handlers = {}
 # Check if we're in local development mode
 LOCAL_RUN = os.getenv("LOCAL_RUN")
 if LOCAL_RUN:
@@ -80,14 +80,33 @@ async def main(transport: BaseTransport):
         pipeline,
     )
 
-    @transport.event_handler("on_client_connected")
-    async def on_client_connected(transport, _):
-        logger.info("Client connected")
-        # TODO: Add send_audio to fastapiwebsockettransport
-        if isinstance(transport, FastAPIWebsocketTransport):
-            await transport._output.queue_frame(sound, FrameDirection.DOWNSTREAM)
-        else:
+    # TODO-CB: ugh
+    print(f"handlers: {handlers}")
+    if "dialout" in handlers:
+        print(f"looking for dialout answered. transport is #{transport}")
+
+        @transport.event_handler("on_client_connected")
+        async def on_client_connected(transport, _):
+            print("client connected")
+
+        @transport.event_handler("on_dialout_connected")
+        async def on_dialout_connected(transport, data):
+            print("dialout starting")
+
+        @transport.event_handler("on_dialout_answered")
+        async def on_dialout_answered(transport, data):
+            logger.info("dialout answered: {}", data)
             await transport.send_audio(sound)
+    else:
+
+        @transport.event_handler("on_client_connected")
+        async def on_client_connected(transport, _):
+            logger.info("Client connected")
+            # TODO: Add send_audio to fastapiwebsockettransport
+            if isinstance(transport, FastAPIWebsocketTransport):
+                await transport._output.queue_frame(sound, FrameDirection.DOWNSTREAM)
+            else:
+                await transport.send_audio(sound)
 
     @transport.event_handler("on_client_disconnected")
     async def on_client_disconnected(transport, participant, reason):
@@ -173,10 +192,14 @@ async def bot(args: SessionArguments):
             args.room_url,
             args.token,
             "Respond bot",
-            DailyParams(**shared_params, transcription_enabled=False),
+            DailyParams(
+                **shared_params,
+                transcription_enabled=False,
+                dialin_settings=dialin_settings,
+                api_key=os.getenv("DAILY_API_KEY"),  # needed for dial-in
+            ),
         )
 
-        handlers = {}
         # Initialize appropriate handlers based on the call type
         if dialin_settings:
             handlers["dialin"] = DialInHandler(transport)
@@ -211,8 +234,9 @@ async def local_daily():
             else:
                 (room_url, token) = await configure(session)
 
+                webbrowser.open(room_url)
+
             logger.warning(f"Talk to your voice agent here: {room_url}")
-            webbrowser.open(room_url)
             transport = DailyTransport(
                 room_url=room_url,
                 token=token,
@@ -240,6 +264,8 @@ async def run_bot(webrtc_connection):
 if LOCAL_RUN and __name__ == "__main__":
     if DAILY_API_KEY or DAILY_ROOM_URL:
         try:
+            # TODO-CB: ugh
+            handlers["dialout"] = "test"
             asyncio.run(local_daily())
         except Exception as e:
             logger.exception(f"Failed to run in local mode: {e}")

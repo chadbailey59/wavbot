@@ -1,5 +1,6 @@
 agent_name = "wavbot"
 image = "chadbailey59/wavbot:0.3"
+secret_set = "wavbot-secrets"
 
 [scaling]
 	min_instances = 0
