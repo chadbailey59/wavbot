@@ -1,5 +1,6 @@
 agent_name = "wavbot"
-image = "chadbailey59/wavbot:0.2"
+image = "chadbailey59/wavbot:0.3"
 
 [scaling]
 	min_instances = 0
+	max_instances = 3

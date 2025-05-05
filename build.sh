@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION="0.2"
+VERSION="0.3"
 DOCKER_USERNAME="chadbailey59"
 AGENT_NAME="wavbot"
 

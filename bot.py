@@ -15,6 +15,7 @@ from pipecat.frames.frames import OutputAudioRawFrame
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineTask
+from pipecat.processors.frame_processor import FrameDirection
 from pipecat.serializers.twilio import TwilioFrameSerializer
 from pipecat.transports.base_transport import BaseTransport, TransportParams
 from pipecat.transports.network.fastapi_websocket import (
@@ -82,7 +83,11 @@ async def main(transport: BaseTransport):
     @transport.event_handler("on_client_connected")
     async def on_client_connected(transport, _):
         logger.info("Client connected")
-        await transport.send_audio(sound)
+        # TODO: Add send_audio to fastapiwebsockettransport
+        if isinstance(transport, FastAPIWebsocketTransport):
+            await transport._output.queue_frame(sound, FrameDirection.DOWNSTREAM)
+        else:
+            await transport.send_audio(sound)
 
     @transport.event_handler("on_client_disconnected")
     async def on_client_disconnected(transport, participant, reason):
