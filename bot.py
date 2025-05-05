@@ -28,6 +28,8 @@ from pipecatcloud.agent import (
     WebSocketSessionArguments,
 )
 
+from daily_phone import DialInHandler, DialOutHandler
+
 load_dotenv(override=True)
 
 
@@ -129,6 +131,38 @@ async def bot(args: SessionArguments):
             ),
         )
     elif isinstance(args, DailySessionArguments):
+        logger.debug("Starting bot in room: {}", args.room_url)
+
+        # Dial-in configuration:
+        # dialin_settings are received when a call is triggered to
+        # Daily via pinless_dialin. This can be a phone number on Daily or a
+        # sip interconnect from Twilio or Telnyx.
+        dialin_settings = None
+        dialled_phonenum = None
+        caller_phonenum = None
+        if raw_dialin_settings := args.body.get("dialin_settings"):
+            # these fields can capitalize the first letter
+            dialled_phonenum = raw_dialin_settings.get("To") or raw_dialin_settings.get(
+                "to"
+            )
+            caller_phonenum = raw_dialin_settings.get(
+                "From"
+            ) or raw_dialin_settings.get("from")
+            dialin_settings = {
+                # these fields can be received as snake_case or camelCase.
+                "call_id": raw_dialin_settings.get("callId")
+                or raw_dialin_settings.get("call_id"),
+                "call_domain": raw_dialin_settings.get("callDomain")
+                or raw_dialin_settings.get("call_domain"),
+            }
+            logger.debug(
+                f"Dialin settings: To: {dialled_phonenum}, From: {caller_phonenum}, dialin_settings: {dialin_settings}"
+            )
+
+        # Dial-out configuration
+        dialout_settings = args.body.get("dialout_settings")
+        logger.debug(f"Dialout settings: {dialout_settings}")
+
         logger.debug("Starting Daily bot")
         transport = DailyTransport(
             args.room_url,
@@ -136,6 +170,20 @@ async def bot(args: SessionArguments):
             "Respond bot",
             DailyParams(**shared_params, transcription_enabled=False),
         )
+
+        handlers = {}
+        # Initialize appropriate handlers based on the call type
+        if dialin_settings:
+            handlers["dialin"] = DialInHandler(transport)
+
+        if dialout_settings:
+            # Create a handler for each dial-out setting
+            # i.e., each phone number/sip address gets its own handler
+            # allows more control on retries and state management
+            handlers["dialout"] = [
+                DialOutHandler(transport, setting) for setting in dialout_settings
+            ]
+
     try:
         await main(transport)
         logger.info("Bot process completed")
