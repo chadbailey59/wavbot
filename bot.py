@@ -109,7 +109,7 @@ async def main(transport: BaseTransport):
                 await transport.send_audio(sound)
 
     @transport.event_handler("on_client_disconnected")
-    async def on_client_disconnected(transport, participant, reason):
+    async def on_client_disconnected(transport, participant, reason=None):
         logger.info("Client disconnected")
         await task.cancel()
 
@@ -265,7 +265,7 @@ if LOCAL_RUN and __name__ == "__main__":
     if DAILY_API_KEY or DAILY_ROOM_URL:
         try:
             # TODO-CB: ugh
-            handlers["dialout"] = "test"
+            # handlers["dialout"] = "test"
             asyncio.run(local_daily())
         except Exception as e:
             logger.exception(f"Failed to run in local mode: {e}")
