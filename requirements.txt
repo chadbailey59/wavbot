@@ -2,3 +2,8 @@ pipecatcloud
 pipecat-ai[daily,webrtc]>=0.0.65
 python-dotenv~=1.0.1
 pipecat-ai-small-webrtc-prebuilt
+fastapi
+uvicorn
+requests
+pydantic
+loguru
