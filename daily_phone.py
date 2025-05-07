@@ -29,17 +29,17 @@ class DialInHandler:
             """Handler for when the dial-in is ready (SIP addresses registered with the SIP network)."""
             # For Twilio, Telnyx, etc. You need to update the state of the call
             # and forward it to the sip_uri.
-            logger.debug(f"Dial-in ready: {data}")
+            logger.info(f"Dial-in ready: {data}")
 
         @self.transport.event_handler("on_dialin_connected")
         async def on_dialin_connected(transport, data):
             """Handler for when a dial-in call is connected."""
-            logger.debug(f"Dial-in connected: {data} and set_bot_ready")
+            logger.info(f"Dial-in connected: {data} and set_bot_ready")
 
         @self.transport.event_handler("on_dialin_stopped")
         async def on_dialin_stopped(transport, data):
             """Handler for when a dial-in call is stopped."""
-            logger.debug(f"Dial-in stopped: {data}")
+            logger.info(f"Dial-in stopped: {data}")
 
         @self.transport.event_handler("on_dialin_error")
         async def on_dialin_error(transport, data):
@@ -100,7 +100,7 @@ class DialOutHandler:
             self.status = "failed"
             return
 
-        logger.debug(
+        logger.info(
             f"Dialout attempt {self.attempt_count}/{self.max_attempts} for {self.dialout_setting}"
         )
 
@@ -134,7 +134,7 @@ class DialOutHandler:
         async def on_dialout_connected(transport, data):
             """Handler for when a dial-out call is connected (starts ringing)."""
             self.status = "connected"
-            logger.debug(f"Dial-out connected: {data}")
+            logger.info(f"Dial-out connected: {data}")
 
         @self.transport.event_handler("on_dialout_answered")
         async def on_dialout_answered(transport, data):
@@ -143,13 +143,13 @@ class DialOutHandler:
             self.status = "answered"
             session_id = data.get("sessionId")
             await transport.capture_participant_transcription(session_id)
-            logger.debug(f"Dial-out answered: {data}")
+            logger.info(f"Dial-out answered: {data}")
 
         @self.transport.event_handler("on_dialout_stopped")
         async def on_dialout_stopped(transport, data):
             """Handler for when a dial-out call is stopped."""
             self.status = "stopped"
-            logger.debug(f"Dial-out stopped: {data}")
+            logger.info(f"Dial-out stopped: {data}")
 
         @self.transport.event_handler("on_dialout_error")
         async def on_dialout_error(transport, data):
